@@ -25,7 +25,7 @@ public class DownloadImageTask extends AsyncTask<IStorableModel, Integer, Bitmap
 	protected Bitmap doInBackground(IStorableModel... storableList) {
 		mUrl = storableList[0].getUrl();
 		
-		Bitmap bitmap = ImageStorage.getThumbnail(storableList[0]);
+		Bitmap bitmap = ImageStorage.downloadThumbnailAndStoreLocally(storableList[0]);
 		return bitmap;
 	}
 

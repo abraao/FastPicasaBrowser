@@ -10,7 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.guaranacode.android.fastpicasabrowser.picasa.model.AlbumEntry;
-import com.guaranacode.android.fastpicasabrowser.tasks.DownloadImageTask;
+import com.guaranacode.android.fastpicasabrowser.storage.ImageStorage;
 import com.guaranacode.android.fastpicasabrowser.R;
 
 /**
@@ -75,7 +75,7 @@ public class AlbumListAdapter extends BaseAdapter {
 		viewHolder.imageView.setImageDrawable(convertView.getResources().getDrawable(R.drawable.loading));
 		viewHolder.imageView.setTag(albumEntry.getUrl());
 
-		new DownloadImageTask(viewHolder.imageView).execute(albumEntry);
+		ImageStorage.setImageThumbnail(albumEntry, viewHolder.imageView);
 
 		return convertView;
 	}

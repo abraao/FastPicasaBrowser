@@ -9,9 +9,9 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 
-import com.guaranacode.android.fastpicasabrowser.picasa.model.PhotoEntry;
-import com.guaranacode.android.fastpicasabrowser.tasks.DownloadImageTask;
 import com.guaranacode.android.fastpicasabrowser.R;
+import com.guaranacode.android.fastpicasabrowser.picasa.model.PhotoEntry;
+import com.guaranacode.android.fastpicasabrowser.storage.ImageStorage;
 
 /**
  * Displays the photos within an album as a grid.
@@ -62,7 +62,8 @@ public class PhotoGridAdapter extends BaseAdapter {
 
         ((ImageView)convertView).setImageDrawable(convertView.getResources().getDrawable(R.drawable.loading));
         convertView.setTag(photoEntry.getUrl());
-        new DownloadImageTask((ImageView)convertView).execute(photoEntry);
+        
+        ImageStorage.setImageThumbnail(photoEntry, (ImageView)convertView);
         
         return convertView;
 	}

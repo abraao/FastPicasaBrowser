@@ -5,11 +5,15 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.widget.ImageView;
 
+import com.guaranacode.android.fastpicasabrowser.tasks.DownloadImageTask;
 import com.guaranacode.android.fastpicasabrowser.util.FileUtils;
 import com.guaranacode.android.fastpicasabrowser.util.ImageUtils;
 import com.guaranacode.android.fastpicasabrowser.util.StringUtils;
@@ -55,10 +59,13 @@ public class ImageStorage {
 		Bitmap thumbnail = null;
 		
 		String localPath = getLocalPathForThumbnail(model, true);
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inPurgeable = true;
+		options.inInputShareable = false;
 		
 		try {
 			FileInputStream fin = new FileInputStream(localPath);
-			thumbnail = BitmapFactory.decodeStream(fin);
+			thumbnail = BitmapFactory.decodeStream(fin, null, options);
 			fin.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -181,22 +188,78 @@ public class ImageStorage {
 			return null;
 		}
 	}
+	
+	/**
+	 * Download a bitmap from an URL.
+	 * 
+	 * @param url
+	 */
+	public static Bitmap downloadBitmap(String url, boolean resizeBitmap) {
+	    Bitmap bitmap = null;
+	    InputStream in = null;
 
-	public static Bitmap getThumbnail(IStorableModel model) {
-		if(null == model) {
-			return null;
+	    try {
+	    	in = new URL(url).openStream();
+	        bitmap = resizeThumbnail(in);
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    } finally {
+	    	if(null != in) {
+	    		try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+	    	}
+	    }
+
+	    return bitmap;
+	}
+	
+	/**
+	 * Resizes a thumbnail to take up less memory.
+	 * @param bitmapStream
+	 * @return
+	 */
+	private static Bitmap resizeThumbnail(InputStream bitmapStream) {
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inSampleSize = 2;
+		
+		Bitmap bitmap = BitmapFactory.decodeStream(bitmapStream, null, options);
+		
+		return bitmap;
+	}
+	
+	public static Bitmap downloadThumbnailAndStoreLocally(IStorableModel model) {
+		Bitmap thumbnail = downloadBitmap(model.getUrl(), true);
+		
+		if(null != thumbnail) {
+			storeLocally(model, thumbnail);
 		}
 		
-		Bitmap thumbnail = getFromLocalStorage(model);
+		return thumbnail;
+	}
+
+	public static Bitmap setImageThumbnail(IStorableModel model, ImageView imageView) {
+		Bitmap thumbnail = null;
 		
-		if(null == thumbnail) {
-			thumbnail = ImageUtils.downloadBitmap(model.getUrl());
-			
-			if(null != thumbnail) {
-				storeLocally(model, thumbnail);
+		try {
+			if(null == model) {
+				return null;
 			}
+			
+			thumbnail = getFromLocalStorage(model);
+			
+			if(null == thumbnail) {
+				new DownloadImageTask(imageView).execute(model);
+			}
+			else {
+				imageView.setImageBitmap(thumbnail);
+			}
+		} catch(Exception ex) {
+			ex.printStackTrace();
 		}
-		
+
 		return thumbnail;
 	}
 }

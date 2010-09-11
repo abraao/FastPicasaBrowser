@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.google.api.client.googleapis.GoogleTransport;
@@ -72,7 +73,12 @@ public class PhotoGridItemClickListener implements OnItemClickListener {
 			e.printStackTrace();
 		}
 		
-		Bitmap photoBitmap = ImageUtils.downloadBitmap(photo.content.url);
+		if(null == photo) {
+			Toast.makeText(this.mContext.getApplicationContext(), "Error getting photo.", Toast.LENGTH_SHORT).show();
+			return;
+		}
+		
+		Bitmap photoBitmap = ImageStorage.downloadBitmap(photo.content.url, false);
 		if(null == photoBitmap) {
 			return;
 		}
