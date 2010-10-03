@@ -19,12 +19,13 @@ public final class R {
         public static final int LinearLayout01=0x7f060001;
         public static final int Password=0x7f060003;
         public static final int SignIn=0x7f060004;
-        public static final int clear_cache=0x7f060007;
+        public static final int clear_cache=0x7f060009;
         public static final int image1=0x7f060000;
         public static final int photo_gridview=0x7f060006;
         public static final int photo_image=0x7f060005;
-        public static final int quit_app=0x7f060009;
-        public static final int sort_albums_by_title=0x7f060008;
+        public static final int quit_app=0x7f06000a;
+        public static final int sort_albums_by_title=0x7f060007;
+        public static final int sort_albums_by_update=0x7f060008;
     }
     public static final class layout {
         public static final int album_entry_view=0x7f030000;
@@ -39,7 +40,8 @@ public final class R {
     public static final class string {
         public static final int app_name=0x7f040000;
         public static final int clear_cache=0x7f040001;
-        public static final int quit_app=0x7f040003;
+        public static final int quit_app=0x7f040004;
         public static final int sort_albums_by_title=0x7f040002;
+        public static final int sort_albums_by_update=0x7f040003;
     }
 }

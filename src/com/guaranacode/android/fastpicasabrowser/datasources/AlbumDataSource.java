@@ -126,6 +126,7 @@ public class AlbumDataSource {
 		values.put(AlbumsTable.ALBUM_ID, album.albumId);
 		values.put(AlbumsTable.ETAG, album.etag);
 		values.put(AlbumsTable.TITLE, album.title);
+		values.put(AlbumsTable.UPDATED, album.updated);
 		values.put(AlbumsTable.THUMBNAIL_LOCAL_PATH, album.getUrl());
 		
 		return values;
@@ -163,6 +164,7 @@ public class AlbumDataSource {
 			albumEntry.albumId = cur.getString(0);
 			albumEntry.etag = cur.getString(2);
 			albumEntry.title = cur.getString(1);
+			albumEntry.updated = cur.getString(5);
 			albumEntry.thumbnailUrl = cur.getString(4);
 			
 			albums.add(albumEntry);

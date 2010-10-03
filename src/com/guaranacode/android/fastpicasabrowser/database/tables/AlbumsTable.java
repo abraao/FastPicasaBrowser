@@ -23,6 +23,8 @@ public class AlbumsTable implements ITable {
 	
 	public static final String TITLE = "title";
 	
+	public static final String UPDATED = "updated";
+	
 	public static final String THUMBNAIL_LOCAL_PATH = "thumbnail_local_path";
 
 	/*
@@ -49,6 +51,7 @@ public class AlbumsTable implements ITable {
 			+ ALBUM_ID + " TEXT,"
 			+ ETAG + " TEXT,"
 			+ TITLE + " TEXT,"
+			+ UPDATED + " TEXT,"
 			+ THUMBNAIL_LOCAL_PATH + " TEXT"
 			+ ");";
 		
@@ -66,6 +69,7 @@ public class AlbumsTable implements ITable {
 		mProjectionMap.put(ALBUM_ID, ALBUM_ID);
 		mProjectionMap.put(ETAG, ETAG);
 		mProjectionMap.put(TITLE, TITLE);
+		mProjectionMap.put(UPDATED, UPDATED);
 		mProjectionMap.put(THUMBNAIL_LOCAL_PATH, THUMBNAIL_LOCAL_PATH);
 	}
 }

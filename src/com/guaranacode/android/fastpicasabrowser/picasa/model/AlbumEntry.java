@@ -25,6 +25,9 @@ public class AlbumEntry extends Entry implements IStorableModel {
 	public String albumId;
 	
 	public String thumbnailUrl;
+	
+	@Key
+	public String updated;
 
 	public String getUrl() {
 		if(!StringUtils.isNullOrEmpty(thumbnailUrl)) {

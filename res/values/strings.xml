@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Fast Picasa Browser</string>
     <string name="clear_cache">Clear cache &amp; quit</string>
-    <string name="sort_albums_by_title">Sort albums by title</string>
+    <string name="sort_albums_by_title">Sort by title</string>
+    <string name="sort_albums_by_update">Sort by last update</string>
     <string name="quit_app">Quit</string>
 </resources>

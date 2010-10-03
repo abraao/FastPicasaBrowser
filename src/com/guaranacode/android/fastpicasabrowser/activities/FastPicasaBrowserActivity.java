@@ -29,8 +29,9 @@ import com.guaranacode.android.fastpicasabrowser.database.DatabaseHelper;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.AlbumEntry;
 import com.guaranacode.android.fastpicasabrowser.storage.ImageStorage;
 import com.guaranacode.android.fastpicasabrowser.tasks.DownloadAlbumList;
-import com.guaranacode.android.fastpicasabrowser.util.AlbumTitleComparator;
+import com.guaranacode.android.fastpicasabrowser.util.AlbumComparator;
 import com.guaranacode.android.fastpicasabrowser.util.AuthUtils;
+import com.guaranacode.android.fastpicasabrowser.util.AlbumComparator.AlbumField;
 
 /**
  * Main activity for the application. Authenticates against Picasa API.
@@ -261,6 +262,9 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 		    case R.id.sort_albums_by_title:
 		        sortAlbumsByTitle();
 		        return true;
+		    case R.id.sort_albums_by_update:
+		    	sortAlbumsByLastUpdate();
+		    	return true;
 		    case R.id.quit_app:
 		        quitApp();
 		        return true;
@@ -292,7 +296,15 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	 * Sort the albums in the browser by name.
 	 */
 	private void sortAlbumsByTitle() {
-		Collections.sort(this.albums, new AlbumTitleComparator());
+		Collections.sort(this.albums, new AlbumComparator(AlbumField.TITLE));
+		this.setAlbums(this.albums, true);
+	}
+	
+	/**
+	 * Sort albums by the date of last update.
+	 */
+	private void sortAlbumsByLastUpdate() {
+		Collections.sort(this.albums, new AlbumComparator(AlbumField.LAST_UPDATE));
 		this.setAlbums(this.albums, true);
 	}
 	
