@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fast Picasa Browser</string>
+    <string name="clear_cache">Clear cache &amp; quit</string>
+    <string name="sort_albums_by_title">Sort albums by title</string>
+    <string name="quit_app">Quit</string>
 </resources>

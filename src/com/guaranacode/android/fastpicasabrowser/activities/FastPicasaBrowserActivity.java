@@ -1,6 +1,7 @@
 package com.guaranacode.android.fastpicasabrowser.activities;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import android.accounts.Account;
@@ -12,6 +13,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -19,9 +23,13 @@ import android.widget.Toast;
 import com.google.api.client.googleapis.GoogleTransport;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.data.picasa.v2.PicasaWebAlbums;
+import com.guaranacode.android.fastpicasabrowser.R;
 import com.guaranacode.android.fastpicasabrowser.adapters.AlbumListAdapter;
+import com.guaranacode.android.fastpicasabrowser.database.DatabaseHelper;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.AlbumEntry;
+import com.guaranacode.android.fastpicasabrowser.storage.ImageStorage;
 import com.guaranacode.android.fastpicasabrowser.tasks.DownloadAlbumList;
+import com.guaranacode.android.fastpicasabrowser.util.AlbumTitleComparator;
 import com.guaranacode.android.fastpicasabrowser.util.AuthUtils;
 
 /**
@@ -212,13 +220,12 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	/**
 	 * Set the albums displayed in this activity.
 	 * @param albumList
+	 * @param isRefresh	True if the albumList is the same list as the albums instance variable.
 	 */
-	public void setAlbums(List<AlbumEntry> albumList) {
-		List<AlbumEntry> albums = albumList;
-
-		if(null != albums) {
+	public void setAlbums(List<AlbumEntry> albumList, boolean isRefresh) {
+		if(!isRefresh && (null != albumList)) {
 			this.albums.clear();
-			this.albums.addAll(albums);
+			this.albums.addAll(albumList);
 		}
 
 		setListAdapter(new AlbumListAdapter(this, this.albums));
@@ -236,5 +243,63 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 			
 			return;
 		}
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+	    MenuInflater inflater = getMenuInflater();
+	    inflater.inflate(R.menu.album_browser_menu, menu);
+	    
+	    return true;
+	}
+	
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    switch (item.getItemId()) {
+		    case R.id.clear_cache:
+		    	clearCache();
+		        return true;
+		    case R.id.sort_albums_by_title:
+		        sortAlbumsByTitle();
+		        return true;
+		    case R.id.quit_app:
+		        quitApp();
+		        return true;
+		    default:
+		        return super.onOptionsItemSelected(item);
+	    }
+	}
+	
+	/**
+	 * Clear the photo thumbnails cache and the list of albums/photos cached in the database.
+	 */
+	private void clearCache() {
+		try {
+			// Clear thumbnails
+			ImageStorage.deleteStoredImages();
+			
+			// Clear database
+			DatabaseHelper dbh = new DatabaseHelper(this.getApplicationContext());
+			dbh.clearDatabase(dbh.getWritableDatabase());
+		}
+		catch(Exception ex) {
+			ex.printStackTrace();
+		}
+		
+		quitApp();
+	}
+	
+	/**
+	 * Sort the albums in the browser by name.
+	 */
+	private void sortAlbumsByTitle() {
+		Collections.sort(this.albums, new AlbumTitleComparator());
+		this.setAlbums(this.albums, true);
+	}
+	
+	/**
+	 * Exit the application.
+	 */
+	private void quitApp() {
+		this.finish();
 	}
 }

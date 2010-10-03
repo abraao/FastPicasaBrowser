@@ -13,6 +13,8 @@ import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.widget.ImageView;
 
+import com.guaranacode.android.fastpicasabrowser.picasa.model.AlbumEntry;
+import com.guaranacode.android.fastpicasabrowser.picasa.model.PhotoEntry;
 import com.guaranacode.android.fastpicasabrowser.tasks.DownloadImageTask;
 import com.guaranacode.android.fastpicasabrowser.util.FileUtils;
 import com.guaranacode.android.fastpicasabrowser.util.ImageUtils;
@@ -83,20 +85,7 @@ public class ImageStorage {
 			return null;
 		}
 		
-		File sdDir = Environment.getExternalStorageDirectory();
-		
-		if(null == sdDir) {
-			return null;
-		}
-		
-		String sdDirPath = null;
-		
-		try {
-			sdDirPath = sdDir.getCanonicalPath();
-		} catch (IOException e) {
-			e.printStackTrace();
-			sdDirPath = null;
-		}
+		String sdDirPath = getSdDirPath();
 		
 		if(StringUtils.isNullOrEmpty(sdDirPath)) {
 			return null;
@@ -124,6 +113,28 @@ public class ImageStorage {
 		}
 		
 		return localImagePath;
+	}
+
+	/**
+	 * Get the path to the sd card.
+	 * @return
+	 */
+	private static String getSdDirPath() {
+		String sdDirPath;
+		File sdDir = Environment.getExternalStorageDirectory();
+		
+		if(null == sdDir) {
+			return null;
+		}
+		
+		try {
+			sdDirPath = sdDir.getCanonicalPath();
+		} catch (IOException e) {
+			e.printStackTrace();
+			sdDirPath = null;
+		}
+
+		return sdDirPath;
 	}
 
 	private static boolean storeLocally(IStorableModel model, Bitmap thumbnail) {
@@ -261,5 +272,18 @@ public class ImageStorage {
 		}
 
 		return thumbnail;
+	}
+	
+	/**
+	 * Deletes all stored thumbnails from the memory card.
+	 */
+	public static void deleteStoredImages() {
+		String sdDirPath = getSdDirPath();
+		
+		if(StringUtils.isNullOrEmpty(sdDirPath)) {
+			return;
+		}
+
+		FileUtils.deleteFile(sdDirPath + "/" + APP_STORAGE_PATH);
 	}
 }

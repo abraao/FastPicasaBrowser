@@ -15,13 +15,16 @@ public final class R {
         public static final int loading=0x7f020001;
     }
     public static final class id {
-        public static final int Email=0x7f050002;
-        public static final int LinearLayout01=0x7f050001;
-        public static final int Password=0x7f050003;
-        public static final int SignIn=0x7f050004;
-        public static final int image1=0x7f050000;
-        public static final int photo_gridview=0x7f050006;
-        public static final int photo_image=0x7f050005;
+        public static final int Email=0x7f060002;
+        public static final int LinearLayout01=0x7f060001;
+        public static final int Password=0x7f060003;
+        public static final int SignIn=0x7f060004;
+        public static final int clear_cache=0x7f060007;
+        public static final int image1=0x7f060000;
+        public static final int photo_gridview=0x7f060006;
+        public static final int photo_image=0x7f060005;
+        public static final int quit_app=0x7f060009;
+        public static final int sort_albums_by_title=0x7f060008;
     }
     public static final class layout {
         public static final int album_entry_view=0x7f030000;
@@ -30,7 +33,13 @@ public final class R {
         public static final int photo_entry_view=0x7f030003;
         public static final int photo_grid=0x7f030004;
     }
+    public static final class menu {
+        public static final int album_browser_menu=0x7f050000;
+    }
     public static final class string {
         public static final int app_name=0x7f040000;
+        public static final int clear_cache=0x7f040001;
+        public static final int quit_app=0x7f040003;
+        public static final int sort_albums_by_title=0x7f040002;
     }
 }

@@ -39,8 +39,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		db.execSQL("DROP ALL TABLES");
+		clearDatabase(db);
 		onCreate(db);
 	}
 
+	/**
+	 * Deletes all data present in the database.
+	 * @param db
+	 */
+	public void clearDatabase(SQLiteDatabase db) {
+		for(ITable table : mAllTables) {
+			db.delete(table.getTableName(), null, null);
+		}
+	}
 }

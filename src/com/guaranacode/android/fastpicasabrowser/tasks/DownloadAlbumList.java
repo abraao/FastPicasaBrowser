@@ -39,7 +39,7 @@ public class DownloadAlbumList extends AsyncTask<Void, Integer, List<AlbumEntry>
 			return;
 		}
 		
-		mActivity.setAlbums(albumList);
+		mActivity.setAlbums(albumList, false);
 	}
 
 }
