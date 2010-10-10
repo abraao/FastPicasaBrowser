@@ -7,6 +7,7 @@ import java.util.List;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.os.Handler;
@@ -208,19 +209,29 @@ public class PhotoDataSource {
 
         int count = 0;
         int numPhotos = photos.size();
-        for(PhotoEntry photo : photos) {
-        	ContentValues values = getContentValuesForPhoto(photo);
+        
+        try {
+        	db.beginTransaction();
         	
-        	if(null != values) {
-        		db.insert(PhotosTable.getInstance().getTableName(), nullColumnHack, values);
-        		count++;
-        		
-				Message msg = new Message();
-				msg.what = PhotoGridActivity.PROGRESS_DBINSERT;
-				msg.arg1 = count;
-				msg.arg2 = numPhotos;
-				progressHandler.sendMessage(msg);
-        	}
+	        for(PhotoEntry photo : photos) {
+	        	ContentValues values = getContentValuesForPhoto(photo);
+	        	
+	        	if(null != values) {
+	        		db.insert(PhotosTable.getInstance().getTableName(), nullColumnHack, values);
+	        		count++;
+	        		
+					Message msg = new Message();
+					msg.what = PhotoGridActivity.PROGRESS_DBINSERT;
+					msg.arg1 = count;
+					msg.arg2 = numPhotos;
+					progressHandler.sendMessage(msg);
+	        	}
+	        }
+	        
+	        db.setTransactionSuccessful();
+        } catch(SQLException ex) {
+        } finally {
+        	db.endTransaction();
         }
 	}
 }

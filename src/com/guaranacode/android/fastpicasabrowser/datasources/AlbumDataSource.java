@@ -8,6 +8,7 @@ import java.util.List;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.os.Handler;
@@ -128,19 +129,29 @@ public class AlbumDataSource {
 
         int count = 0;
         int numAlbums = albums.size();
-        for(AlbumEntry album : albums) {
-        	ContentValues values = getContentValuesForAlbum(album);
+        
+        try{
+        	db.beginTransaction();
         	
-        	if(null != values) {
-        		db.insert(AlbumsTable.getInstance().getTableName(), nullColumnHack, values);
-        		count++;
-
-				Message msg = new Message();
-				msg.what = FastPicasaBrowserActivity.PROGRESS_DBINSERT;
-				msg.arg1 = count;
-				msg.arg2 = numAlbums;
-				progressHandler.sendMessage(msg);
-        	}
+	        for(AlbumEntry album : albums) {
+	        	ContentValues values = getContentValuesForAlbum(album);
+	        	
+	        	if(null != values) {
+	        		db.insert(AlbumsTable.getInstance().getTableName(), nullColumnHack, values);
+	        		count++;
+	
+					Message msg = new Message();
+					msg.what = FastPicasaBrowserActivity.PROGRESS_DBINSERT;
+					msg.arg1 = count;
+					msg.arg2 = numAlbums;
+					progressHandler.sendMessage(msg);
+	        	}
+	        }
+	        
+	        db.setTransactionSuccessful();
+        } catch(SQLException ex) {
+        } finally {
+        	db.endTransaction();
         }
 	}
 	
