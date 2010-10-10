@@ -19,9 +19,30 @@ public class Feed {
 
 	@Key("link")
 	public List<Link> links;
+	
+	@Key("openSearch:totalResults")
+	public int numEntries;
+	
+	@Key("openSearch:startIndex")
+	public int entryIndex;
+	
+	@Key("openSearch:itemsPerPage")
+	public int maxEntriesPerPage;
 
 	public String getNextLink() {
 		return Link.find(links, "next");
+	}
+	
+	public int numPages() {
+		return (int)Math.ceil(((double)numEntries) / ((double)maxEntriesPerPage));
+	}
+	
+	/**
+	 * The current page, using 0 based indexing.
+	 * @return
+	 */
+	public int currentPage() {
+		return ((int)Math.ceil(((double)entryIndex) / ((double)maxEntriesPerPage))) - 1;
 	}
 
 	static Feed executeGet(GoogleTransport transport, PicasaUrl url,

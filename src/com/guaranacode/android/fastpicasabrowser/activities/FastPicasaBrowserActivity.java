@@ -9,10 +9,13 @@ import android.accounts.AccountManager;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -31,6 +34,7 @@ import com.guaranacode.android.fastpicasabrowser.storage.ImageStorage;
 import com.guaranacode.android.fastpicasabrowser.tasks.DownloadAlbumList;
 import com.guaranacode.android.fastpicasabrowser.util.AlbumComparator;
 import com.guaranacode.android.fastpicasabrowser.util.AuthUtils;
+import com.guaranacode.android.fastpicasabrowser.util.DialogUtil;
 import com.guaranacode.android.fastpicasabrowser.util.AlbumComparator.AlbumField;
 
 /**
@@ -42,16 +46,43 @@ import com.guaranacode.android.fastpicasabrowser.util.AlbumComparator.AlbumField
 public final class FastPicasaBrowserActivity extends ListActivity {
 
 	private static final int REQUEST_AUTHENTICATE = 0;
-
 	private static final String PREF = "FastPicasaBrowserPrefs";
-
 	private static final int GOOGLE_ACCOUNTS_DIALOG = 0;
 
 	private static GoogleTransport transport;
-
 	private String authToken;
-
 	private final List<AlbumEntry> albums = new ArrayList<AlbumEntry>();
+
+	public static final int ALBUM_PROGRESS_COMPLETE = 1;
+	
+	public static final int ALBUM_PROGRESS_NEW_PAGE = 2;
+
+	public static final int ALBUM_PROGRESS_START = 3;
+	
+	public static final int ALBUM_PROGRESS_DBINSERT = 4;
+
+	/**
+	 * The amount by which we increase the album progress dialog whenever
+	 * a new page is received from the Picasa API.
+	 */
+	private int mAmountPerPage = -1;
+	
+	/**
+	 * The progress point where we started to add progress from inserting
+	 * albums into the database.
+	 */
+	private int mAlbumDbInsertStart = -1;
+	
+	private ProgressDialog mAlbumProgressDialog;
+	private Handler mAlbumProgressHandler = new Handler() {
+		public void handleMessage(Message message) {
+			if(null == mAlbumProgressDialog) {
+				return;
+			}
+			
+			handleAlbumProgressMessage(message);
+		}
+	};
 
 	/**
 	 * Set up the HTTP transport to use the Atom parser.
@@ -66,7 +97,7 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
 		getAccount(false);
 	}
 
@@ -79,27 +110,27 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 			case GOOGLE_ACCOUNTS_DIALOG:
 				AlertDialog.Builder builder = new AlertDialog.Builder(this);
 				builder.setTitle("Select a Google account");
-				
+	
 				final AccountManager manager = AccountManager.get(this);
 				final Account[] accounts = manager.getAccountsByType("com.google");
-				
+	
 				final int size = accounts.length;
 				String[] names = new String[size];
-				
+	
 				for (int i = 0; i < size; i++) {
 					names[i] = accounts[i].name;
 				}
-				
+	
 				builder.setItems(names, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						gotAccount(manager, accounts[which]);
 					}
 				});
-				
+	
 				return builder.create();
-			}
+		}
 
-			return null;
+		return null;
 	}
 
 	/**
@@ -110,30 +141,30 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	private void getAccount(boolean tokenExpired) {
 		SharedPreferences settings = getSharedPreferences(PREF, 0);
 		String accountName = settings.getString("accountName", null);
-		
+
 		this.setTitle(accountName);
-		
+
 		if (accountName != null) {
 			AccountManager manager = AccountManager.get(this);
 			Account[] accounts = manager.getAccountsByType("com.google");
-			
+
 			int size = accounts.length;
-			
+
 			for (int i = 0; i < size; i++) {
 				Account account = accounts[i];
-				
+
 				if (accountName.equals(account.name)) {
 					if (tokenExpired) {
 						manager.invalidateAuthToken("com.google", this.authToken);
 					}
-					
+
 					gotAccount(manager, account);
-					
+
 					return;
 				}
 			}
 		}
-		
+
 		showDialog(GOOGLE_ACCOUNTS_DIALOG);
 	}
 
@@ -147,22 +178,22 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	private void gotAccount(AccountManager manager, Account account) {
 		SharedPreferences settings = getSharedPreferences(PREF, 0);
 		SharedPreferences.Editor editor = settings.edit();
-	
+
 		editor.putString("accountName", account.name);
 		editor.commit();
-		
+
 		try {
 			// This breaks in Android 2.2. That version of Android forbids blocking calls in the main thread of the application.
 			Bundle bundle = manager.getAuthToken(account, PicasaWebAlbums.AUTH_TOKEN_TYPE, true, null, null).getResult();
-			
+
 			if (bundle.containsKey(AccountManager.KEY_INTENT)) {
 				Intent intent = bundle.getParcelable(AccountManager.KEY_INTENT);
-				
+
 				int flags = intent.getFlags();
 				flags &= ~Intent.FLAG_ACTIVITY_NEW_TASK;
-				
+
 				intent.setFlags(flags);
-				
+
 				startActivityForResult(intent, REQUEST_AUTHENTICATE);
 			} else if (bundle.containsKey(AccountManager.KEY_AUTHTOKEN)) {
 				authenticatedClientLogin(bundle.getString(AccountManager.KEY_AUTHTOKEN));
@@ -190,7 +221,7 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 		super.onListItemClick(listView, view, position, id);
 
 		AlbumEntry albumEntry;
-		
+
 		if(position < this.albums.size()) {
 			albumEntry = this.albums.get(position);
 		}
@@ -202,10 +233,10 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 		extraData.putString("authToken", this.authToken);
 		extraData.putString("albumId", albumEntry.albumId);
 		extraData.putString("albumTitle", albumEntry.title);
-		
+
 		Intent displayPhotosIntent = new Intent(this.getApplicationContext(), PhotoGridActivity.class);	
 		displayPhotosIntent.putExtras(extraData);
-		
+
 		this.startActivity(displayPhotosIntent);
 	}
 
@@ -213,11 +244,74 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	 * Get the list of albums.
 	 */
 	private void displayAlbums() {
-		Toast.makeText(getApplicationContext(), "Loading all albums", Toast.LENGTH_LONG).show();
+		mAlbumProgressDialog = createAlbumProgressDialog();
 
-		new DownloadAlbumList(this, transport, getApplicationContext()).execute();
+		new DownloadAlbumList(this, transport, getApplicationContext(), mAlbumProgressHandler).execute();
+	}
+
+	/**
+	 * Creates the progress dialog and shows it, returning the resulting dialog.
+	 * @return
+	 */
+	private ProgressDialog createAlbumProgressDialog() {
+		ProgressDialog albumProgressDialog = new ProgressDialog(this);
+		albumProgressDialog.setCancelable(true);
+		albumProgressDialog.setMessage("Loading all albums...");
+		albumProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		albumProgressDialog.setProgress(0);
+		albumProgressDialog.setMax(100);
+		albumProgressDialog.show();
+
+		return albumProgressDialog;
 	}
 	
+	/**
+	 * Handle a message with information about the album update progress dialog.
+	 * @param message
+	 */
+	protected void handleAlbumProgressMessage(Message message) {
+		int numPages = -1;
+		
+		if((null != message) && (message.what != 0)) {
+			switch(message.what) {
+				case ALBUM_PROGRESS_START:
+					Toast.makeText(getApplicationContext(), "Contacting Picasa (takes a few seconds) ...", Toast.LENGTH_LONG).show();
+					mAlbumProgressDialog.incrementProgressBy(mAlbumProgressDialog.getMax() / 20);
+					break;
+				case ALBUM_PROGRESS_COMPLETE:
+					DialogUtil.finishProgressDialog(mAlbumProgressDialog);
+					break;
+				case ALBUM_PROGRESS_DBINSERT:
+					if(message.arg2 != 0) { // number of albums is not 0
+						if(mAlbumDbInsertStart < 0) {
+							mAlbumDbInsertStart = mAlbumProgressDialog.getProgress();
+						}
+						
+						//int amountPerAlbum = mAmountPerPage / message.arg2;
+						mAlbumProgressDialog.setProgress(mAlbumDbInsertStart + ((mAmountPerPage * message.arg1) / message.arg2));
+						//mAlbumProgressDialog.incrementProgressBy(amountPerAlbum);
+					}
+					break;
+				case ALBUM_PROGRESS_NEW_PAGE:
+					if(message.arg2 != 0) {
+						if(mAmountPerPage < 0) { // Is this the first message?
+							mAlbumProgressDialog.setProgress(mAlbumProgressDialog.getMax() / 3);
+							
+							if(numPages < 0) {
+								numPages = message.arg2;
+								int diff = DialogUtil.getRemainingProgress(mAlbumProgressDialog);
+								mAmountPerPage = diff / 2;
+							}
+						}
+						else { // This is neither the first nor the last message
+							mAlbumProgressDialog.incrementProgressBy(mAmountPerPage);
+						}
+					}
+					break;
+			}
+		}
+	}
+
 	/**
 	 * Set the albums displayed in this activity.
 	 * @param albumList
@@ -234,45 +328,45 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 
 	private void handleException(Exception e) {
 		e.printStackTrace();
-		
+
 		if (e instanceof HttpResponseException) {
 			int statusCode = ((HttpResponseException) e).response.statusCode;
-			
+
 			if (statusCode == 401 || statusCode == 403) {
 				getAccount(true);
 			}
-			
+
 			return;
 		}
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-	    MenuInflater inflater = getMenuInflater();
-	    inflater.inflate(R.menu.album_browser_menu, menu);
-	    
-	    return true;
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.album_browser_menu, menu);
+
+		return true;
 	}
-	
+
 	public boolean onOptionsItemSelected(MenuItem item) {
-	    switch (item.getItemId()) {
-		    case R.id.clear_cache:
-		    	clearCache();
-		        return true;
-		    case R.id.sort_albums_by_title:
-		        sortAlbumsByTitle();
-		        return true;
-		    case R.id.sort_albums_by_update:
-		    	sortAlbumsByLastUpdate();
-		    	return true;
-		    case R.id.quit_app:
-		        quitApp();
-		        return true;
-		    default:
-		        return super.onOptionsItemSelected(item);
-	    }
+		switch (item.getItemId()) {
+		case R.id.clear_cache:
+			clearCache();
+			return true;
+		case R.id.sort_albums_by_title:
+			sortAlbumsByTitle();
+			return true;
+		case R.id.sort_albums_by_update:
+			sortAlbumsByLastUpdate();
+			return true;
+		case R.id.quit_app:
+			quitApp();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
-	
+
 	/**
 	 * Clear the photo thumbnails cache and the list of albums/photos cached in the database.
 	 */
@@ -280,7 +374,7 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 		try {
 			// Clear thumbnails
 			ImageStorage.deleteStoredImages();
-			
+
 			// Clear database
 			DatabaseHelper dbh = new DatabaseHelper(this.getApplicationContext());
 			dbh.clearDatabase(dbh.getWritableDatabase());
@@ -288,10 +382,10 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 		catch(Exception ex) {
 			ex.printStackTrace();
 		}
-		
+
 		quitApp();
 	}
-	
+
 	/**
 	 * Sort the albums in the browser by name.
 	 */
@@ -299,7 +393,7 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 		Collections.sort(this.albums, new AlbumComparator(AlbumField.TITLE));
 		this.setAlbums(this.albums, true);
 	}
-	
+
 	/**
 	 * Sort albums by the date of last update.
 	 */
@@ -307,7 +401,7 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 		Collections.sort(this.albums, new AlbumComparator(AlbumField.LAST_UPDATE));
 		this.setAlbums(this.albums, true);
 	}
-	
+
 	/**
 	 * Exit the application.
 	 */

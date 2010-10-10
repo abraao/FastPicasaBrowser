@@ -13,7 +13,6 @@ import java.util.List;
  *
  */
 public class AlbumFeed extends Feed {
-
 	@Key("entry")
 	public List<AlbumEntry> albums;
 

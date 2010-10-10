@@ -4,6 +4,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Handler;
 
 import com.google.api.client.googleapis.GoogleTransport;
 import com.guaranacode.android.fastpicasabrowser.activities.FastPicasaBrowserActivity;
@@ -20,17 +21,22 @@ public class DownloadAlbumList extends AsyncTask<Void, Integer, List<AlbumEntry>
 	private GoogleTransport mTransport;
 	private Context mContext;
 	private FastPicasaBrowserActivity mActivity;
+	private Handler mAlbumProgressHandler;
 	
-	public DownloadAlbumList(FastPicasaBrowserActivity activity, GoogleTransport transport, Context context) {
+	public DownloadAlbumList(
+			FastPicasaBrowserActivity activity,
+			GoogleTransport transport,
+			Context context,
+			Handler albumProgressHandler) {
 		mActivity = activity;
 		mTransport = transport;
 		mContext = context;
+		mAlbumProgressHandler = albumProgressHandler;
 	}
 	
 	@Override
 	protected List<AlbumEntry> doInBackground(Void... params) {
-		List<AlbumEntry> albums = AlbumDataSource.getAlbums(mTransport, mContext);
-
+		List<AlbumEntry> albums = AlbumDataSource.getAlbums(mTransport, mContext, mAlbumProgressHandler);
 		return albums;
 	}
 	

@@ -10,8 +10,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.os.Handler;
+import android.os.Message;
 
 import com.google.api.client.googleapis.GoogleTransport;
+import com.guaranacode.android.fastpicasabrowser.activities.FastPicasaBrowserActivity;
 import com.guaranacode.android.fastpicasabrowser.database.DatabaseHelper;
 import com.guaranacode.android.fastpicasabrowser.database.tables.AlbumsTable;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.AlbumEntry;
@@ -34,19 +37,33 @@ public class AlbumDataSource {
 	/**
 	 * Returns the list of all albums from either the database or a picasa feed.
 	 * @param transport
+	 * @param albumProgressHandler 
 	 * @return
 	 */
-	public static List<AlbumEntry> getAlbums(GoogleTransport transport, Context context) {
-		List<AlbumEntry> albums = null;
-		
-		// If the data is not available locally
-		albums = getAlbumsFromDatabase(context);
+	public static List<AlbumEntry> getAlbums(
+			GoogleTransport transport,
+			Context context,
+			Handler albumProgressHandler) {
+
+		// Check if the data is available locally
+		List<AlbumEntry> albums = getAlbumsFromDatabase(context);
 		
 		// get it from Picasa
 		if(null == albums) {
-			albums = getAlbumsFromPicasa(transport);
+			Message msg = new Message();
+			msg.what = FastPicasaBrowserActivity.ALBUM_PROGRESS_START;
+			albumProgressHandler.sendMessage(msg);
+
+			albums = getAlbumsFromPicasa(transport, albumProgressHandler);
 			// cache the data locally in the database
-			insertAlbumsIntoDatabase(albums, context);
+			insertAlbumsIntoDatabase(albums, context, albumProgressHandler);
+		}
+		
+		// Dispatch a message with the max and how many we've displayed so far
+		if(null != albumProgressHandler) {
+			Message msg = new Message();
+			msg.what = FastPicasaBrowserActivity.ALBUM_PROGRESS_COMPLETE;
+			albumProgressHandler.sendMessage(msg);
 		}
 		
 		return albums;
@@ -55,9 +72,10 @@ public class AlbumDataSource {
 	/**
 	 * Get the albums from Picasa.
 	 * @param transport
+	 * @param albumProgressHandler 
 	 * @return
 	 */
-	private static List<AlbumEntry> getAlbumsFromPicasa(GoogleTransport transport) {
+	private static List<AlbumEntry> getAlbumsFromPicasa(GoogleTransport transport, Handler albumProgressHandler) {
 		List<AlbumEntry> albums = new ArrayList<AlbumEntry>();
 		
 		try {
@@ -66,6 +84,13 @@ public class AlbumDataSource {
 			// page through results
 			while (true) {
 				AlbumFeed albumFeed = AlbumFeed.executeGet(transport, url);
+				
+				// Dispatch a message with the max and how many we've displayed so far
+				Message msg = new Message();
+				msg.what = FastPicasaBrowserActivity.ALBUM_PROGRESS_NEW_PAGE;
+				msg.arg1 = albumFeed.currentPage();
+				msg.arg2 = albumFeed.numPages();
+				albumProgressHandler.sendMessage(msg);
 
 				if (albumFeed.albums != null) {
 					albums.addAll(albumFeed.albums);
@@ -96,18 +121,28 @@ public class AlbumDataSource {
 	/**
 	 * Cache the data locally in the database.
 	 * @param context
+	 * @param albumProgressHandler 
 	 */
-	private static void insertAlbumsIntoDatabase(List<AlbumEntry> albums, Context context) {
+	private static void insertAlbumsIntoDatabase(List<AlbumEntry> albums, Context context, Handler albumProgressHandler) {
 		DatabaseHelper dbh = new DatabaseHelper(context);
 		SQLiteDatabase db = dbh.getWritableDatabase();
 		
         String nullColumnHack = null;
 
+        int count = 0;
+        int numAlbums = albums.size();
         for(AlbumEntry album : albums) {
         	ContentValues values = getContentValuesForAlbum(album);
         	
         	if(null != values) {
         		db.insert(AlbumsTable.getInstance().getTableName(), nullColumnHack, values);
+        		count++;
+
+				Message msg = new Message();
+				msg.what = FastPicasaBrowserActivity.ALBUM_PROGRESS_DBINSERT;
+				msg.arg1 = count;
+				msg.arg2 = numAlbums;
+				albumProgressHandler.sendMessage(msg);
         	}
         }
 	}
