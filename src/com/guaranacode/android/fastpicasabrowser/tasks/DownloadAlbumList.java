@@ -21,22 +21,22 @@ public class DownloadAlbumList extends AsyncTask<Void, Integer, List<AlbumEntry>
 	private GoogleTransport mTransport;
 	private Context mContext;
 	private FastPicasaBrowserActivity mActivity;
-	private Handler mAlbumProgressHandler;
+	private Handler mProgressHandler;
 	
 	public DownloadAlbumList(
 			FastPicasaBrowserActivity activity,
 			GoogleTransport transport,
 			Context context,
-			Handler albumProgressHandler) {
+			Handler progressHandler) {
 		mActivity = activity;
 		mTransport = transport;
 		mContext = context;
-		mAlbumProgressHandler = albumProgressHandler;
+		mProgressHandler = progressHandler;
 	}
 	
 	@Override
 	protected List<AlbumEntry> doInBackground(Void... params) {
-		List<AlbumEntry> albums = AlbumDataSource.getAlbums(mTransport, mContext, mAlbumProgressHandler);
+		List<AlbumEntry> albums = AlbumDataSource.getAlbums(mTransport, mContext, mProgressHandler);
 		return albums;
 	}
 	

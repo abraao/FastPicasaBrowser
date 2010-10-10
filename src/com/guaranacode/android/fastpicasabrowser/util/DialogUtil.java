@@ -1,6 +1,7 @@
 package com.guaranacode.android.fastpicasabrowser.util;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 
 public class DialogUtil {
 	/**
@@ -26,5 +27,23 @@ public class DialogUtil {
 		}
 		
 		return dialog.getMax() - dialog.getProgress();
+	}
+	
+	/**
+	 * Creates a progress dialog with the given message and context and shows it.
+	 * @param message
+	 * @param context
+	 * @return
+	 */
+	public static ProgressDialog createProgressDialog(String message, Context context) {
+		ProgressDialog albumProgressDialog = new ProgressDialog(context);
+		albumProgressDialog.setCancelable(true);
+		albumProgressDialog.setMessage(message);
+		albumProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		albumProgressDialog.setProgress(0);
+		albumProgressDialog.setMax(100);
+		albumProgressDialog.show();
+
+		return albumProgressDialog;
 	}
 }

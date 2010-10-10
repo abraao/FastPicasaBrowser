@@ -38,8 +38,11 @@ public final class R {
         public static final int album_browser_menu=0x7f050000;
     }
     public static final class string {
+        public static final int albums_loading=0x7f040006;
         public static final int app_name=0x7f040000;
         public static final int clear_cache=0x7f040001;
+        public static final int photos_loading=0x7f040007;
+        public static final int picasa_loading=0x7f040005;
         public static final int quit_app=0x7f040004;
         public static final int sort_albums_by_title=0x7f040002;
         public static final int sort_albums_by_update=0x7f040003;

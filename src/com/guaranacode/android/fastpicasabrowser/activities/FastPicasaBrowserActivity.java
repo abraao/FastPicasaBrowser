@@ -53,13 +53,13 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	private String authToken;
 	private final List<AlbumEntry> albums = new ArrayList<AlbumEntry>();
 
-	public static final int ALBUM_PROGRESS_COMPLETE = 1;
+	public static final int PROGRESS_COMPLETE = 1;
 	
-	public static final int ALBUM_PROGRESS_NEW_PAGE = 2;
+	public static final int PROGRESS_NEW_PAGE = 2;
 
-	public static final int ALBUM_PROGRESS_START = 3;
+	public static final int PROGRESS_START = 3;
 	
-	public static final int ALBUM_PROGRESS_DBINSERT = 4;
+	public static final int PROGRESS_DBINSERT = 4;
 
 	/**
 	 * The amount by which we increase the album progress dialog whenever
@@ -73,14 +73,14 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	 */
 	private int mAlbumDbInsertStart = -1;
 	
-	private ProgressDialog mAlbumProgressDialog;
-	private Handler mAlbumProgressHandler = new Handler() {
+	private ProgressDialog mProgressDialog;
+	private Handler mProgressHandler = new Handler() {
 		public void handleMessage(Message message) {
-			if(null == mAlbumProgressDialog) {
+			if(null == mProgressDialog) {
 				return;
 			}
 			
-			handleAlbumProgressMessage(message);
+			handleProgressMessage(message);
 		}
 	};
 
@@ -244,67 +244,49 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	 * Get the list of albums.
 	 */
 	private void displayAlbums() {
-		mAlbumProgressDialog = createAlbumProgressDialog();
+		mProgressDialog = DialogUtil.createProgressDialog(getString(R.string.albums_loading), this);
 
-		new DownloadAlbumList(this, transport, getApplicationContext(), mAlbumProgressHandler).execute();
+		new DownloadAlbumList(this, transport, getApplicationContext(), mProgressHandler).execute();
 	}
 
-	/**
-	 * Creates the progress dialog and shows it, returning the resulting dialog.
-	 * @return
-	 */
-	private ProgressDialog createAlbumProgressDialog() {
-		ProgressDialog albumProgressDialog = new ProgressDialog(this);
-		albumProgressDialog.setCancelable(true);
-		albumProgressDialog.setMessage("Loading all albums...");
-		albumProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		albumProgressDialog.setProgress(0);
-		albumProgressDialog.setMax(100);
-		albumProgressDialog.show();
-
-		return albumProgressDialog;
-	}
-	
 	/**
 	 * Handle a message with information about the album update progress dialog.
 	 * @param message
 	 */
-	protected void handleAlbumProgressMessage(Message message) {
+	protected void handleProgressMessage(Message message) {
 		int numPages = -1;
 		
 		if((null != message) && (message.what != 0)) {
 			switch(message.what) {
-				case ALBUM_PROGRESS_START:
-					Toast.makeText(getApplicationContext(), "Contacting Picasa (takes a few seconds) ...", Toast.LENGTH_LONG).show();
-					mAlbumProgressDialog.incrementProgressBy(mAlbumProgressDialog.getMax() / 20);
+				case PROGRESS_START:
+					Toast.makeText(getApplicationContext(), R.string.picasa_loading, Toast.LENGTH_LONG).show();
+					mProgressDialog.incrementProgressBy(mProgressDialog.getMax() / 20);
 					break;
-				case ALBUM_PROGRESS_COMPLETE:
-					DialogUtil.finishProgressDialog(mAlbumProgressDialog);
+				case PROGRESS_COMPLETE:
+					DialogUtil.finishProgressDialog(mProgressDialog);
 					break;
-				case ALBUM_PROGRESS_DBINSERT:
+				case PROGRESS_DBINSERT:
 					if(message.arg2 != 0) { // number of albums is not 0
 						if(mAlbumDbInsertStart < 0) {
-							mAlbumDbInsertStart = mAlbumProgressDialog.getProgress();
+							mAlbumDbInsertStart = mProgressDialog.getProgress();
 						}
-						
-						//int amountPerAlbum = mAmountPerPage / message.arg2;
-						mAlbumProgressDialog.setProgress(mAlbumDbInsertStart + ((mAmountPerPage * message.arg1) / message.arg2));
-						//mAlbumProgressDialog.incrementProgressBy(amountPerAlbum);
+
+						mProgressDialog.setProgress(mAlbumDbInsertStart + ((mAmountPerPage * message.arg1) / message.arg2));
 					}
 					break;
-				case ALBUM_PROGRESS_NEW_PAGE:
+				case PROGRESS_NEW_PAGE:
 					if(message.arg2 != 0) {
 						if(mAmountPerPage < 0) { // Is this the first message?
-							mAlbumProgressDialog.setProgress(mAlbumProgressDialog.getMax() / 3);
+							mProgressDialog.setProgress(mProgressDialog.getMax() / 3);
 							
 							if(numPages < 0) {
 								numPages = message.arg2;
-								int diff = DialogUtil.getRemainingProgress(mAlbumProgressDialog);
+								int diff = DialogUtil.getRemainingProgress(mProgressDialog);
 								mAmountPerPage = diff / 2;
 							}
 						}
 						else { // This is neither the first nor the last message
-							mAlbumProgressDialog.incrementProgressBy(mAmountPerPage);
+							mProgressDialog.incrementProgressBy(mAmountPerPage);
 						}
 					}
 					break;

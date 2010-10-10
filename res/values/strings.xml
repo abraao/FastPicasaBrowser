@@ -5,4 +5,7 @@
     <string name="sort_albums_by_title">Sort by title</string>
     <string name="sort_albums_by_update">Sort by last update</string>
     <string name="quit_app">Quit</string>
+    <string name="picasa_loading">Contacting Picasa (takes a few seconds) ...</string>
+    <string name="albums_loading">Loading all albums...</string>
+    <string name="photos_loading">Loading album\'s photos...</string>
 </resources>

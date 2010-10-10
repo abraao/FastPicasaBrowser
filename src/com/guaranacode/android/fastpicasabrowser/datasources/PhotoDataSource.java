@@ -9,8 +9,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.os.Handler;
+import android.os.Message;
 
 import com.google.api.client.googleapis.GoogleTransport;
+import com.guaranacode.android.fastpicasabrowser.activities.PhotoGridActivity;
 import com.guaranacode.android.fastpicasabrowser.database.DatabaseHelper;
 import com.guaranacode.android.fastpicasabrowser.database.tables.PhotosTable;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.PhotoEntry;
@@ -64,15 +67,28 @@ public class PhotoDataSource {
 	/**
 	 * Returns the list of all albums from either the database or a picasa feed.
 	 * @param transport
+	 * @param progressHandler 
 	 * @return
 	 */
-	public static List<PhotoEntry> getPhotos(String albumId, GoogleTransport transport, Context context) {
+	public static List<PhotoEntry> getPhotos(
+			String albumId,
+			GoogleTransport transport,
+			Context context,
+			Handler progressHandler) {
 		List<PhotoEntry> photos = getPhotosFromDatabase(albumId, context);
 		
 		if(null == photos) {
-			photos = getPhotosFromPicasa(albumId, transport);
-			insertPhotosIntoDatabase(photos, context);
+			Message msg = new Message();
+			msg.what = PhotoGridActivity.PROGRESS_START;
+			progressHandler.sendMessage(msg);
+			
+			photos = getPhotosFromPicasa(albumId, transport, progressHandler);
+			insertPhotosIntoDatabase(photos, context, progressHandler);
 		}
+		
+		Message msg = new Message();
+		msg.what = PhotoGridActivity.PROGRESS_COMPLETE;
+		progressHandler.sendMessage(msg);
 		
 		return photos;
 	}
@@ -133,9 +149,13 @@ public class PhotoDataSource {
 	 * 
 	 * @param albumId
 	 * @param transport
+	 * @param progressHandler 
 	 * @return
 	 */
-	private static List<PhotoEntry> getPhotosFromPicasa(String albumId, GoogleTransport transport) {
+	private static List<PhotoEntry> getPhotosFromPicasa(
+			String albumId,
+			GoogleTransport transport,
+			Handler progressHandler) {
 		List<PhotoEntry> photos = new ArrayList<PhotoEntry>();
 		
 		try {
@@ -144,6 +164,13 @@ public class PhotoDataSource {
 			// page through results
 			while (true) {
 				PhotoListFeed photoFeed = PhotoListFeed.executeGet(transport, url);
+				
+				// Dispatch a message with the max and how many we've displayed so far
+				Message msg = new Message();
+				msg.what = PhotoGridActivity.PROGRESS_NEW_PAGE;
+				msg.arg1 = photoFeed.currentPage();
+				msg.arg2 = photoFeed.numPages();
+				progressHandler.sendMessage(msg);
 				
 				if(null != photoFeed.photos) {
 					photos.addAll(photoFeed.photos);
@@ -171,18 +198,28 @@ public class PhotoDataSource {
 	 * @param albumId
 	 * @param photos
 	 * @param context
+	 * @param progressHandler 
 	 */
-	private static void insertPhotosIntoDatabase(List<PhotoEntry> photos, Context context) {
+	private static void insertPhotosIntoDatabase(List<PhotoEntry> photos, Context context, Handler progressHandler) {
 		DatabaseHelper dbh = new DatabaseHelper(context);
 		SQLiteDatabase db = dbh.getWritableDatabase();
 		
         String nullColumnHack = null;
 
+        int count = 0;
+        int numPhotos = photos.size();
         for(PhotoEntry photo : photos) {
         	ContentValues values = getContentValuesForPhoto(photo);
         	
         	if(null != values) {
         		db.insert(PhotosTable.getInstance().getTableName(), nullColumnHack, values);
+        		count++;
+        		
+				Message msg = new Message();
+				msg.what = PhotoGridActivity.PROGRESS_DBINSERT;
+				msg.arg1 = count;
+				msg.arg2 = numPhotos;
+				progressHandler.sendMessage(msg);
         	}
         }
 	}

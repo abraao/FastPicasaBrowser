@@ -1,5 +1,5 @@
-* Progress bars
-** For fetching photos in the photo grid.
+* Progress dialog
+** Refactor duplicate progress dialog code from FastPicasaBrowserActivity and PhotoGridActivity. 
 * Hide the album and photo thumbnails from gallery.
 * Request new lists if there has been a change and update local cache.
 * Request new thumbnails if there has been a change and update local cache.

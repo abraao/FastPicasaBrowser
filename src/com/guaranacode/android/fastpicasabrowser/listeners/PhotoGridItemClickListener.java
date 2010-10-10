@@ -19,7 +19,6 @@ import com.guaranacode.android.fastpicasabrowser.picasa.model.PicasaUrl;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.SinglePhotoFeed;
 import com.guaranacode.android.fastpicasabrowser.storage.ImageStorage;
 import com.guaranacode.android.fastpicasabrowser.util.AuthUtils;
-import com.guaranacode.android.fastpicasabrowser.util.ImageUtils;
 
 /**
  * Listen to click event on a photo in a photo grid.

@@ -13,11 +13,8 @@ import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.widget.ImageView;
 
-import com.guaranacode.android.fastpicasabrowser.picasa.model.AlbumEntry;
-import com.guaranacode.android.fastpicasabrowser.picasa.model.PhotoEntry;
 import com.guaranacode.android.fastpicasabrowser.tasks.DownloadImageTask;
 import com.guaranacode.android.fastpicasabrowser.util.FileUtils;
-import com.guaranacode.android.fastpicasabrowser.util.ImageUtils;
 import com.guaranacode.android.fastpicasabrowser.util.StringUtils;
 
 /**
