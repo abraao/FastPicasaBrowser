@@ -186,11 +186,6 @@ public class AlbumDataSource {
 		SQLiteQueryBuilder qb = getQueryBuilder();
 		
 		DatabaseHelper dbh = new DatabaseHelper(context);
-
-		/*SQLiteDatabase db2 = dbh.getWritableDatabase();
-		db2.execSQL("DROP TABLE " + AlbumsTable.getInstance().getTableName());
-		db2.execSQL("DROP TABLE " + PhotosTable.getInstance().getTableName());
-		dbh.onCreate(db2);*/
 		
 		SQLiteDatabase db = dbh.getReadableDatabase();
 		

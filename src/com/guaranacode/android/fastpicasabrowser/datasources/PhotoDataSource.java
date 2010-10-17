@@ -107,11 +107,6 @@ public class PhotoDataSource {
 		
 		DatabaseHelper dbh = new DatabaseHelper(context);
 
-		/*SQLiteDatabase db2 = dbh.getWritableDatabase();
-		db2.execSQL("DROP TABLE " + AlbumsTable.getInstance().getTableName());
-		db2.execSQL("DROP TABLE " + PhotosTable.getInstance().getTableName());
-		dbh.onCreate(db2);*/
-		
 		SQLiteDatabase db = dbh.getReadableDatabase();
 		
 		Collection<String> photoColumns = PhotosTable.getInstance().getProjectionMap().values();
