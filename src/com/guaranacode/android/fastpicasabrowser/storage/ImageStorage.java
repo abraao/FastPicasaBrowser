@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
@@ -15,6 +16,7 @@ import android.widget.ImageView;
 
 import com.guaranacode.android.fastpicasabrowser.tasks.DownloadImageTask;
 import com.guaranacode.android.fastpicasabrowser.util.FileUtils;
+import com.guaranacode.android.fastpicasabrowser.util.StorageUtils;
 import com.guaranacode.android.fastpicasabrowser.util.StringUtils;
 
 /**
@@ -25,9 +27,13 @@ import com.guaranacode.android.fastpicasabrowser.util.StringUtils;
  */
 public class ImageStorage {
 
-	private static String APP_STORAGE_PATH = "com.guaranacode.fastpicasabrowser/files";
+	private static String APP_PACKAGE = "com.guaranacode.fastpicasabrowser";
+	
+	private static String APP_STORAGE_PATH = APP_PACKAGE + "/files";
 	
 	private static String TEMP_PHOTO_DIR = "temp_photos";
+	
+	private static String TEMP_PHOTO_NAME = "temp_photo.jpg";
 	
 	public static String getLocalPathForThumbnail(IStorableModel model, boolean includeFilename) {
 		String relativePath = APP_STORAGE_PATH + "/" + model.getDir();
@@ -55,6 +61,10 @@ public class ImageStorage {
 			return null;
 		}
 		
+		if(!StorageUtils.canReadFromExternalStorage()) {
+			return null;
+		}
+		
 		Bitmap thumbnail = null;
 		
 		String localPath = getLocalPathForThumbnail(model, true);
@@ -67,10 +77,8 @@ public class ImageStorage {
 			thumbnail = BitmapFactory.decodeStream(fin, null, options);
 			fin.close();
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 			thumbnail = null;
 		} catch (IOException e) {
-			e.printStackTrace();
 			thumbnail = null;
 		}
 		
@@ -127,7 +135,6 @@ public class ImageStorage {
 		try {
 			sdDirPath = sdDir.getCanonicalPath();
 		} catch (IOException e) {
-			e.printStackTrace();
 			sdDirPath = null;
 		}
 
@@ -135,6 +142,10 @@ public class ImageStorage {
 	}
 
 	private static boolean storeLocally(IStorableModel model, Bitmap thumbnail) {
+		if(!StorageUtils.canWriteToExternalStorage()) {
+			return false;
+		}
+		
 		String localPath = getLocalPathForThumbnail(model, true);
 		String localDir = getLocalPathForThumbnail(model, false);
 		
@@ -155,15 +166,13 @@ public class ImageStorage {
 			
 			return true;
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 			return false;
 		} catch (IOException e) {
-			e.printStackTrace();
 			return false;
 		}
 	}
-	
-	public static File storeBitmapLocally(String url, Bitmap bitmap) {
+
+	public static File storeBitmapLocally(String url, Bitmap bitmap, Context context) {
 		if(StringUtils.isNullOrEmpty(url)) {
 			return null;
 		}
@@ -171,28 +180,45 @@ public class ImageStorage {
 		if(null == bitmap) {
 			return null;
 		}
+
+		String filePath;
+		boolean useInternalStorage;
 		
-		String relativePath = APP_STORAGE_PATH + "/" + TEMP_PHOTO_DIR;
-		String localDir = getLocalPathForImage(url, relativePath, false);
-		String localPath = localDir + "temp_photo.jpg";
-		
-		FileUtils.createPath(localDir);
+		if(StorageUtils.canWriteToExternalStorage()) {
+			useInternalStorage = false;
+			
+			String relativePath = APP_STORAGE_PATH + "/" + TEMP_PHOTO_DIR;
+			String localDir = getLocalPathForImage(url, relativePath, false);
+			filePath = localDir + TEMP_PHOTO_NAME;
+			
+			FileUtils.createPath(localDir);
+		} else {
+			useInternalStorage = true;
+			filePath = ""; // dummy value
+		}
 		
 		FileOutputStream fout = null;
 		
-		try {	
-			fout = new FileOutputStream(localPath);
+		try {
+			File file;
+			
+			if(useInternalStorage) {
+				fout = context.openFileOutput(TEMP_PHOTO_NAME, Context.MODE_WORLD_READABLE);
+				file = context.getFileStreamPath(TEMP_PHOTO_NAME);
+			}
+			else {
+				fout = new FileOutputStream(filePath);
+				file = new File(filePath);
+			}
 			
 			bitmap.compress(Bitmap.CompressFormat.JPEG, 80, fout);
 			fout.flush();
 			fout.close();
-			
-			return new File(localPath);
+
+			return file;
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
 			return null;
 		} catch (IOException e) {
-			e.printStackTrace();
 			return null;
 		}
 	}
@@ -210,13 +236,11 @@ public class ImageStorage {
 	    	in = new URL(url).openStream();
 	        bitmap = resizeThumbnail(in);
 	    } catch (IOException e) {
-	        e.printStackTrace();
 	    } finally {
 	    	if(null != in) {
 	    		try {
 					in.close();
 				} catch (IOException e) {
-					e.printStackTrace();
 				}
 	    	}
 	    }
@@ -265,7 +289,6 @@ public class ImageStorage {
 				imageView.setImageBitmap(thumbnail);
 			}
 		} catch(Exception ex) {
-			ex.printStackTrace();
 		}
 
 		return thumbnail;
@@ -275,6 +298,10 @@ public class ImageStorage {
 	 * Deletes all stored thumbnails from the memory card.
 	 */
 	public static void deleteStoredImages() {
+		if(!StorageUtils.canWriteToExternalStorage()) {
+			return;
+		}
+		
 		String sdDirPath = getSdDirPath();
 		
 		if(StringUtils.isNullOrEmpty(sdDirPath)) {

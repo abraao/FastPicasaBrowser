@@ -8,4 +8,5 @@
     <string name="picasa_loading">Contacting Picasa (takes a few seconds) ...</string>
     <string name="albums_loading">Loading all albums...</string>
     <string name="photos_loading">Loading album\'s photos...</string>
+    <string name="photo_storage_error">Could not store photo in phone or memory card.</string>
 </resources>

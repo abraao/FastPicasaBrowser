@@ -30,7 +30,6 @@ public class StreamUtils {
 			try {
 				line = reader.readLine();
 			} catch (IOException e) {
-				e.printStackTrace();
 				break;
 			}
 			
