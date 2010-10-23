@@ -309,8 +309,6 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 	}
 
 	private void handleException(Exception e) {
-		e.printStackTrace();
-
 		if (e instanceof HttpResponseException) {
 			int statusCode = ((HttpResponseException) e).response.statusCode;
 
@@ -362,7 +360,6 @@ public final class FastPicasaBrowserActivity extends ListActivity {
 			dbh.clearDatabase(dbh.getWritableDatabase());
 		}
 		catch(Exception ex) {
-			ex.printStackTrace();
 		}
 
 		quitApp();

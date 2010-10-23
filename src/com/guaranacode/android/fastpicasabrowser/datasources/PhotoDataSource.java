@@ -20,6 +20,7 @@ import com.guaranacode.android.fastpicasabrowser.database.tables.PhotosTable;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.PhotoEntry;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.PhotoListFeed;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.PicasaUrl;
+import com.guaranacode.android.fastpicasabrowser.util.StorageUtils;
 
 /**
  * Class to fetch photo list from the internet and cache it locally,
@@ -101,6 +102,10 @@ public class PhotoDataSource {
 	 * @return
 	 */
 	private static List<PhotoEntry> getPhotosFromDatabase(String albumId, Context context) {
+		if(!StorageUtils.canReadFromExternalStorage()) {
+			return null;
+		}
+		
 		List<PhotoEntry> photos = new ArrayList<PhotoEntry>();
 
 		SQLiteQueryBuilder qb = getQueryBuilder();
@@ -179,7 +184,6 @@ public class PhotoDataSource {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		
 		for(PhotoEntry photo : photos) {
@@ -197,6 +201,10 @@ public class PhotoDataSource {
 	 * @param progressHandler 
 	 */
 	private static void insertPhotosIntoDatabase(List<PhotoEntry> photos, Context context, Handler progressHandler) {
+		if(!StorageUtils.canWriteToExternalStorage()) {
+			return;
+		}
+		
 		DatabaseHelper dbh = new DatabaseHelper(context);
 		SQLiteDatabase db = dbh.getWritableDatabase();
 		
