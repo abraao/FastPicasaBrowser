@@ -28,13 +28,11 @@ public class ImageUtils {
 	    	in = new URL(url).openStream();
 	        bitmap = BitmapFactory.decodeStream(in);
 	    } catch (IOException e) {
-	        e.printStackTrace();
 	    } finally {
 	    	if(null != in) {
 	    		try {
 					in.close();
 				} catch (IOException e) {
-					e.printStackTrace();
 				}
 	    	}
 	    }

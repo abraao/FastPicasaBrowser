@@ -21,6 +21,7 @@ import com.guaranacode.android.fastpicasabrowser.database.tables.AlbumsTable;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.AlbumEntry;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.AlbumFeed;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.PicasaUrl;
+import com.guaranacode.android.fastpicasabrowser.util.StorageUtils;
 
 /**
  * Class to fetch album list from the internet and cache it locally,
@@ -101,7 +102,6 @@ public class AlbumDataSource {
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
 			return null;
 		}
 
@@ -122,6 +122,14 @@ public class AlbumDataSource {
 	 * @param progressHandler 
 	 */
 	private static void insertAlbumsIntoDatabase(List<AlbumEntry> albums, Context context, Handler progressHandler) {
+		if(!StorageUtils.canWriteToExternalStorage()) {
+			return;
+		}
+		
+		if((null == albums) || (albums.size() == 0)) {
+			return;
+		}
+		
 		DatabaseHelper dbh = new DatabaseHelper(context);
 		SQLiteDatabase db = dbh.getWritableDatabase();
 		
@@ -181,6 +189,10 @@ public class AlbumDataSource {
 	 * @return
 	 */
 	private static List<AlbumEntry> getAlbumsFromDatabase(Context context) {
+		if(!StorageUtils.canReadFromExternalStorage()) {
+			return null;
+		}
+		
 		List<AlbumEntry> albums = new ArrayList<AlbumEntry>();
 		
 		SQLiteQueryBuilder qb = getQueryBuilder();

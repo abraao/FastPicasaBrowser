@@ -13,6 +13,7 @@ import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.google.api.client.googleapis.GoogleTransport;
+import com.guaranacode.android.fastpicasabrowser.R;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.MediaGroup;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.PhotoEntry;
 import com.guaranacode.android.fastpicasabrowser.picasa.model.PicasaUrl;
@@ -69,7 +70,6 @@ public class PhotoGridItemClickListener implements OnItemClickListener {
 				photo = spf.photo;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		
 		if(null == photo) {
@@ -82,8 +82,9 @@ public class PhotoGridItemClickListener implements OnItemClickListener {
 			return;
 		}
 		
-		File photoFile = ImageStorage.storeBitmapLocally(photo.content.url, photoBitmap);
+		File photoFile = ImageStorage.storeBitmapLocally(photo.content.url, photoBitmap, this.mContext);
 		if(null == photoFile) {
+			Toast.makeText(this.mContext, R.string.photo_storage_error, Toast.LENGTH_LONG);
 			return;
 		}
 		
