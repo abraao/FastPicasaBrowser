@@ -196,35 +196,41 @@ public class AlbumDataSource {
 		List<AlbumEntry> albums = new ArrayList<AlbumEntry>();
 		
 		SQLiteQueryBuilder qb = getQueryBuilder();
-		
 		DatabaseHelper dbh = new DatabaseHelper(context);
+		Cursor cur = null;
 		
-		SQLiteDatabase db = dbh.getReadableDatabase();
-		
-		Collection<String> albumColumns = AlbumsTable.getInstance().getProjectionMap().values();
-		String[] albumColsArray = (String[]) albumColumns.toArray(new String[albumColumns.size()]);
-		
-		Cursor cur = qb.query(db, albumColsArray, null, null, null, null, null);
-		
-		cur.moveToFirst();
-		
-		while(!cur.isAfterLast()) {
-			// TODO: associate column names with column numbers.
-			AlbumEntry albumEntry = new AlbumEntry();
-			albumEntry.albumId = cur.getString(0);
-			albumEntry.etag = cur.getString(2);
-			albumEntry.title = cur.getString(1);
-			albumEntry.updated = cur.getString(5);
-			albumEntry.thumbnailUrl = cur.getString(4);
+		try {
+			SQLiteDatabase db = dbh.getReadableDatabase();
 			
-			albums.add(albumEntry);
+			Collection<String> albumColumns = AlbumsTable.getInstance().getProjectionMap().values();
+			String[] albumColsArray = (String[]) albumColumns.toArray(new String[albumColumns.size()]);
 			
-			cur.moveToNext();
+			cur = qb.query(db, albumColsArray, null, null, null, null, null);
+			
+			cur.moveToFirst();
+			
+			while(!cur.isAfterLast()) {
+				// TODO: associate column names with column numbers.
+				AlbumEntry albumEntry = new AlbumEntry();
+				albumEntry.albumId = cur.getString(0);
+				albumEntry.etag = cur.getString(2);
+				albumEntry.title = cur.getString(1);
+				albumEntry.updated = cur.getString(5);
+				albumEntry.thumbnailUrl = cur.getString(4);
+				
+				albums.add(albumEntry);
+				
+				cur.moveToNext();
+			}
+		} catch(Exception ex) {
+			albums = null;
+		} finally {
+			if(null != cur && !cur.isClosed()) {
+				cur.close();
+			}
 		}
 		
-		cur.close();
-		
-		if(0 == albums.size()) {
+		if(null == albums || 0 == albums.size()) {
 			return null;
 		}
 		
