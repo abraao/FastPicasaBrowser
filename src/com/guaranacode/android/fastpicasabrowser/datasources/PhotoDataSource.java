@@ -111,35 +111,42 @@ public class PhotoDataSource {
 		SQLiteQueryBuilder qb = getQueryBuilder();
 		
 		DatabaseHelper dbh = new DatabaseHelper(context);
-
-		SQLiteDatabase db = dbh.getReadableDatabase();
+		Cursor cur = null;
 		
-		Collection<String> photoColumns = PhotosTable.getInstance().getProjectionMap().values();
-		String[] photoColsArray = (String[]) photoColumns.toArray(new String[photoColumns.size()]);
-
-		String[] whereArgs = new String[1];
-		whereArgs[0] = albumId;
-
-		Cursor cur = qb.query(db, photoColsArray, "album_id = ?", whereArgs, null, null, null);
-
-		cur.moveToFirst();
-		
-		while(!cur.isAfterLast()) {
-			// TODO: associate column names with column numbers.
-			PhotoEntry photoEntry = new PhotoEntry();
-			photoEntry.photoId = cur.getString(0);
-			photoEntry.etag = cur.getString(1);
-			photoEntry.thumbnailUrl = cur.getString(3);
-			photoEntry.albumId = cur.getString(4);
+		try {
+			SQLiteDatabase db = dbh.getReadableDatabase();
 			
-			photos.add(photoEntry);
+			Collection<String> photoColumns = PhotosTable.getInstance().getProjectionMap().values();
+			String[] photoColsArray = (String[]) photoColumns.toArray(new String[photoColumns.size()]);
+	
+			String[] whereArgs = new String[1];
+			whereArgs[0] = albumId;
+	
+			cur = qb.query(db, photoColsArray, "album_id = ?", whereArgs, null, null, null);
+	
+			cur.moveToFirst();
 			
-			cur.moveToNext();
+			while(!cur.isAfterLast()) {
+				// TODO: associate column names with column numbers.
+				PhotoEntry photoEntry = new PhotoEntry();
+				photoEntry.photoId = cur.getString(0);
+				photoEntry.etag = cur.getString(1);
+				photoEntry.thumbnailUrl = cur.getString(3);
+				photoEntry.albumId = cur.getString(4);
+				
+				photos.add(photoEntry);
+				
+				cur.moveToNext();
+			}
+		} catch(Exception ex) {
+			photos = null;
+		} finally {
+			if(null != cur && !cur.isClosed()) {
+				cur.close();
+			}
 		}
 
-		cur.close();
-
-		if(0 == photos.size()) {
+		if(null == photos || 0 == photos.size()) {
 			return null;
 		}
 		
